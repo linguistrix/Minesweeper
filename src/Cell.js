@@ -1,47 +1,62 @@
-import React, { Component } from "react";
-import "./App.css";
+import React from 'react';
+import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 
-const MINE_CHAR = String.fromCodePoint(0x1f4a3); // BOMB
-const WON_MINE_CHAR = String.fromCodePoint(0x1f3c6); // TROPHY
-const UNOPENED_SQUARE_CHAR = String.fromCodePoint(0x2b1b); // BLACK BOX
+import './App.css';
+import constants from './constants.js';
 
-class Cell extends Component {
-	render() {
-		return (
-			<div>
-				{this.props.youLost
-					? this._renderLost()
-					: this.props.youWon
-						? this._renderWon()
-						: this._renderPlaying()}
-			</div>
-		);
-	}
+const Cell = props => (
+  <div>
+    {props.youLost
+      ? _renderLost(props)
+      : props.youWon
+        ? _renderWon(props)
+        : _renderPlaying(props)}
+  </div>
+);
 
-	_renderLost() {
-		if (this.props.value === MINE_CHAR) {
-			return MINE_CHAR;
-		} else if (this.props.status) {
-			return this.props.value;
-		} else {
-			return UNOPENED_SQUARE_CHAR;
-		}
-	}
+const _renderLost = props => {
+  if (props.status === constants.MARKED_MINE_CHAR) {
+    return constants.MARKED_MINE_CHAR;
+  } else if (props.value === constants.MINE_CHAR) {
+    return <GrowingCell>{constants.MINE_CHAR}</GrowingCell>;
+  } else if (props.status) {
+    return props.value;
+  } else {
+    return <UnopenedCell {...props} />;
+  }
+};
 
-	_renderWon() {
-		if (this.props.value === MINE_CHAR) {
-			return WON_MINE_CHAR;
-		} else {
-			return this.props.value;
-		}
-	}
+const _renderWon = props => {
+  if (props.value === constants.MINE_CHAR) {
+    return <GrowingCell>{constants.WON_MINE_CHAR}</GrowingCell>;
+  } else {
+    return props.value;
+  }
+};
 
-	_renderPlaying() {
-		if (this.props.status) {
-			return this.props.value;
-		} else {
-			return UNOPENED_SQUARE_CHAR;
-		}
-	}
-}
+const _renderPlaying = props => {
+  if (props.status === constants.MARKED_MINE_CHAR) {
+    return constants.MARKED_MINE_CHAR;
+  } else if (props.status) {
+    return props.value;
+  } else {
+    return <UnopenedCell {...props} />;
+  }
+};
+
+const UnopenedCell = props => (
+  <div className={props.youWon || props.youLost ? '' : 'active-cell'}>
+    {constants.UNOPENED_SQUARE_CHAR}
+  </div>
+);
+
+const GrowingCell = props => (
+  <ReactCSSTransitionGroup
+    transitionName="growing-cell"
+    transitionAppear={true}
+  >
+    <div>{props.children}</div>
+  </ReactCSSTransitionGroup>
+);
+
 export default Cell;

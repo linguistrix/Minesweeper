@@ -1,8 +1,7 @@
-import React, { Component } from "react";
-import "./App.css";
-import Cell from "./Cell.js";
-
-const MINE_CHAR = String.fromCodePoint(0x1f4a3); // BOMB
+import React, { Component } from 'react';
+import './App.css';
+import Cell from './Cell.js';
+import constants from './constants.js';
 
 class App extends Component {
   constructor() {
@@ -30,7 +29,7 @@ class App extends Component {
       for (let j = 0; j < this.state.numColumns; ++j) {
         if (
           !this.state.isOpened[i][j] &&
-          !(this.state.board[i][j] === MINE_CHAR)
+          !(this.state.board[i][j] === constants.MINE_CHAR)
         ) {
           return false;
         }
@@ -44,13 +43,13 @@ class App extends Component {
       [...Array(numColumns).keys()].map(j => {
         return Math.random() < numMines / (numRows * numColumns) &&
           !(i === iBlack && j === jBlack)
-          ? MINE_CHAR
+          ? constants.MINE_CHAR
           : 0;
       })
     );
     for (let i = 0; i < numRows; ++i) {
       for (let j = 0; j < numColumns; ++j) {
-        if (board[i][j] === MINE_CHAR) continue;
+        if (board[i][j] === constants.MINE_CHAR) continue;
         board[i][j] = this.getNeighboringMineCount(
           board,
           numRows,
@@ -91,7 +90,8 @@ class App extends Component {
   }
 
   clickCell(i, j) {
-    if (this.state.youWon || this.state.youLost) return;
+    if (this.state.youWon || this.state.youLost || this.isMarkedCell(i, j))
+      return;
     if (!this.state.board) {
       // eslint-disable-next-line
       this.state.board = this.initBoard(
@@ -104,16 +104,38 @@ class App extends Component {
     }
 
     this.setState({
-      youLost: this.state.youLost || this.state.board[i][j] === MINE_CHAR,
+      youLost:
+        this.state.youLost || this.state.board[i][j] === constants.MINE_CHAR,
       isOpened: this.openCell(i, j),
       youWon: this.hasWon()
     });
+  }
+
+  rightClickCell(i, j) {
+    if (this.state.youWon || this.state.youLost || !this.state.board) return;
+    this.setState({
+      isOpened: this.toggleMarkCell(i, j)
+    });
+    return true;
+  }
+
+  toggleMarkCell(i, j) {
+    const isOpened = this.state.isOpened;
+    if (!isOpened[i][j]) {
+      isOpened[i][j] = constants.MARKED_MINE_CHAR;
+    } else if (isOpened[i][j] === constants.MARKED_MINE_CHAR) {
+      isOpened[i][j] = false;
+    }
+    return isOpened;
   }
 
   isValidCell(numRows, numColumns, i, j) {
     return i >= 0 && i < numRows && j >= 0 && j < numColumns;
   }
 
+  isMarkedCell(i, j) {
+    return this.state.isOpened[i][j] === constants.MARKED_MINE_CHAR;
+  }
   getNeighboringMineCount(board, numRows, numColumns, i, j) {
     let numMines = 0;
     [-1, 0, 1].map(xoff =>
@@ -123,7 +145,7 @@ class App extends Component {
         }
         if (
           this.isValidCell(numRows, numColumns, i + xoff, j + yoff) &&
-          board[i + xoff][j + yoff] === MINE_CHAR
+          board[i + xoff][j + yoff] === constants.MINE_CHAR
         ) {
           numMines++;
         }
@@ -134,16 +156,15 @@ class App extends Component {
   }
 
   render() {
-    console.log(this.state);
     return (
       <div className="App">
         <div className="App-header">
           Minesweeper
           {this.state.youWon
-            ? " (WINNER)"
+            ? ' (WINNER)'
             : this.state.youLost
-              ? " (LOSER)"
-              : ""}
+              ? ' (LOSER)'
+              : ''}
         </div>
         <center>
           <div className="mine-board">
@@ -154,6 +175,11 @@ class App extends Component {
                     <td
                       className="cell"
                       onClick={this.clickCell.bind(this, x, y)}
+                      onContextMenu={event => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        this.rightClickCell(x, y);
+                      }}
                     >
                       <Cell
                         status={this.state.isOpened[x][y]}

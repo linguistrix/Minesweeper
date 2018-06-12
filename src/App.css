@@ -33,8 +33,25 @@
   cursor: default;
 }
 
+.active-cell {
+  transition: all 0.3s;
+}
+
+.active-cell:hover {
+  transform: scale(1.2);
+}
+
 .mine-board {
   align: center;
+}
+
+.growing-cell-appear {
+  transform: scale(0.5);
+  transition: all 1s ease-out;
+}
+
+.growing-cell-appear.growing-cell-appear-active {
+  transform: scale(1);
 }
 
 @keyframes App-logo-spin {
